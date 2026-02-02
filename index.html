@@ -3,39 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>腳落盤點-快捷版</title>
+    <title>腳落燒烤盤點系統</title>
     <style>
         :root { --primary: #2c3e50; --accent: #d35400; --bg: #f2f2f2; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 10px; padding-bottom: 100px; }
-        .header { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 10px; padding-bottom: 120px; }
+        .header { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: sticky; top: 10px; z-index: 100; }
         .input-group { margin-bottom: 8px; display: flex; align-items: center; }
-        .input-group label { width: 60px; font-weight: bold; font-size: 14px; }
-        .input-group input { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; }
-        .category-title { background: #34495e; color: white; padding: 8px 15px; border-radius: 6px; margin: 15px 0 8px 0; font-size: 0.9rem; }
-        .item-card { background: white; border-radius: 10px; padding: 12px; margin-bottom: 8px; border-left: 5px solid #bdc3c7; }
-        .item-name { font-size: 1rem; font-weight: bold; margin-bottom: 10px; display: flex; justify-content: space-between; }
-        .unit { font-weight: normal; font-size: 0.8rem; color: #7f8c8d; }
-        .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .control-box { text-align: center; background: #fafafa; padding: 5px; border-radius: 5px; }
-        .control-label { font-size: 12px; color: #7f8c8d; margin-bottom: 5px; }
+        .input-group label { width: 70px; font-weight: bold; font-size: 14px; color: var(--primary); }
+        .input-group input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; background: #fff; }
+        .category-title { background: #34495e; color: white; padding: 10px 15px; border-radius: 8px; margin: 20px 0 10px 0; font-size: 1rem; font-weight: bold; }
+        .item-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .item-name { font-size: 1.1rem; font-weight: bold; margin-bottom: 12px; color: #000; display: flex; justify-content: space-between; align-items: center; }
+        .unit { font-weight: normal; font-size: 0.85rem; color: #7f8c8d; background: #fdf2e9; padding: 2px 8px; border-radius: 4px; }
+        .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .control-box { text-align: center; background: #f9f9f9; padding: 8px; border-radius: 8px; border: 1px solid #eee; }
+        .control-label { font-size: 13px; color: #555; margin-bottom: 8px; font-weight: 600; }
         .counter { display: flex; align-items: center; justify-content: center; }
-        .btn { width: 40px; height: 40px; border: none; border-radius: 6px; font-size: 18px; color: white; }
+        .btn { width: 45px; height: 45px; border: none; border-radius: 10px; font-size: 22px; color: white; font-weight: bold; transition: opacity 0.1s; }
+        .btn:active { opacity: 0.6; }
         .btn-m { background: #e74c3c; }
         .btn-p { background: #27ae60; }
-        .val { width: 40px; text-align: center; font-size: 16px; font-weight: bold; border: none; background: transparent; }
-        .footer { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 15px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: flex; flex-direction: column; gap: 8px; }
-        .main-btn { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 8px; font-size: 16px; font-weight: bold; }
-        #output { display: none; }
+        .val { width: 45px; text-align: center; font-size: 18px; font-weight: bold; border: none; background: transparent; color: #333; }
+        .footer { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 15px; box-shadow: 0 -3px 15px rgba(0,0,0,0.15); z-index: 1000; }
+        .main-btn { background: var(--accent); color: white; border: none; padding: 15px; border-radius: 10px; font-size: 18px; font-weight: bold; width: 100%; box-shadow: 0 4px 10px rgba(211,84,0,0.3); }
+        #output { position: absolute; left: -9999px; }
     </style>
 </head>
 <body>
 
 <div class="header">
     <div class="input-group">
-        <label>日期</label><input type="date" id="orderDate">
+        <label>叫貨日期</label><input type="date" id="orderDate">
     </div>
     <div class="input-group">
-        <label>叫貨人</label><input type="text" id="orderName" value="朱展毅">
+        <label>叫貨人</label><input type="text" id="orderName" placeholder="請填寫姓名" required>
     </div>
 </div>
 
@@ -43,10 +44,11 @@
 
 <div class="footer">
     <button id="actionBtn" class="main-btn" onclick="process()">產生並自動複製清單</button>
-    <textarea id="output"></textarea>
+    <textarea id="output" readonly></textarea>
 </div>
 
 <script>
+    // 根據您提供的 2026腳落食材叫貨表 PDF 內容完整設定 
     const inventory = [
         { cat: "醃菜", items: [{n: "辣蘿蔔", u: "3KG"}] },
         { cat: "肉類", items: [
@@ -57,7 +59,7 @@
         { cat: "烤菜類", items: [
             {n: "馬鈴薯", u: "箱/袋"}, {n: "節瓜", u: "箱"}, {n: "杏鮑菇", u: "3KG/包"},
             {n: "洋蔥", u: "袋"}, {n: "筍絲", u: "12KG/箱"}, {n: "木耳絲", u: "3KG/包"},
-            {n: "豆包", u: "3KG/包"}, {n: "紅蘿蔔", u: "袋"}, {n: "南瓜", u: "箱"}, {n: "蒜仁", u: "包"}
+            {n: "豆包(烤菜)", u: "3KG/包"}, {n: "紅蘿蔔", u: "袋"}, {n: "南瓜", u: "箱"}, {n: "蒜仁", u: "包"}
         ]},
         { cat: "水菜類", items: [
             {n: "豆芽菜", u: "一包"}, {n: "高麗菜", u: "籃/箱"}, {n: "油菜", u: "籃"},
@@ -79,7 +81,7 @@
                     <div class="item-name">${i.n} <span class="unit">${i.u}</span></div>
                     <div class="control-grid">
                         <div class="control-box">
-                            <div class="control-label">庫存</div>
+                            <div class="control-label">庫存剩餘</div>
                             <div class="counter">
                                 <button class="btn btn-m" onclick="step('${i.n}_s',-0.5)">-</button>
                                 <input class="val" id="${i.n}_s" value="0" readonly>
@@ -87,7 +89,7 @@
                             </div>
                         </div>
                         <div class="control-box">
-                            <div class="control-label">叫貨</div>
+                            <div class="control-label">本次叫貨</div>
                             <div class="counter">
                                 <button class="btn btn-m" onclick="step('${i.n}_o',-0.5)">-</button>
                                 <input class="val" id="${i.n}_o" value="0" readonly>
@@ -108,6 +110,13 @@
     function process() {
         const date = document.getElementById('orderDate').value;
         const name = document.getElementById('orderName').value;
+        
+        if(!name) {
+            alert("請填寫叫貨人姓名！");
+            document.getElementById('orderName').focus();
+            return;
+        }
+
         let txt = `腳落食材叫貨日期: ${date}\n叫貨人: ${name}\n`;
         txt += `------------------------\n`;
         
@@ -117,27 +126,37 @@
             c.items.forEach(i => {
                 const s = document.getElementById(i.n + '_s').value;
                 const o = document.getElementById(i.n + '_o').value;
-                if(s > 0 || o > 0) {
+                if(parseFloat(s) > 0 || parseFloat(o) > 0) {
                     if(!hasItem) { txt += catHeader; hasItem = true; }
-                    txt += `${i.n} (${i.u}) | 剩:${s} | 叫:${o}\n`;
+                    txt += `${i.n} / ${i.u} / 剩:${s} / 叫:${o}\n`;
                 }
             });
         });
 
-        const copyText = document.getElementById("output");
-        copyText.value = txt;
-        copyText.select();
-        copyText.setSelectionRange(0, 99999);
-        navigator.clipboard.writeText(txt).then(() => {
-            const btn = document.getElementById('actionBtn');
-            btn.innerText = "✅ 已複製！可直接貼到 LINE";
-            btn.style.background = "#27ae60";
-            setTimeout(() => {
-                btn.innerText = "再次產生並複製清單";
-                btn.style.background = "#d35400";
-            }, 3000);
-        });
+        const outputArea = document.getElementById("output");
+        outputArea.value = txt;
+        
+        // 執行複製功能
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(txt).then(() => successFeedback());
+        } else {
+            outputArea.select();
+            document.execCommand('copy');
+            successFeedback();
+        }
     }
+
+    function successFeedback() {
+        const btn = document.getElementById('actionBtn');
+        btn.innerText = "✅ 已複製！可直接貼到 LINE";
+        btn.style.background = "#27ae60";
+        setTimeout(() => {
+            btn.innerText = "產生並自動複製清單";
+            btn.style.background = "#d35400";
+        }, 3000);
+    }
+
+    // 初始化當天日期
     document.getElementById('orderDate').valueAsDate = new Date();
 </script>
 </body>
