@@ -48,7 +48,6 @@
 </div>
 
 <script>
-    // 根據您提供的 2026腳落食材叫貨表 PDF 內容完整設定 
     const inventory = [
         { cat: "醃菜", items: [{n: "辣蘿蔔", u: "3KG"}] },
         { cat: "肉類", items: [
@@ -81,7 +80,7 @@
                     <div class="item-name">${i.n} <span class="unit">${i.u}</span></div>
                     <div class="control-grid">
                         <div class="control-box">
-                            <div class="control-label">庫存剩餘</div>
+                            <div class="control-label">庫存剩餘 (±0.5)</div>
                             <div class="counter">
                                 <button class="btn btn-m" onclick="step('${i.n}_s',-0.5)">-</button>
                                 <input class="val" id="${i.n}_s" value="0" readonly>
@@ -89,11 +88,11 @@
                             </div>
                         </div>
                         <div class="control-box">
-                            <div class="control-label">本次叫貨</div>
+                            <div class="control-label">本次叫貨 (±1)</div>
                             <div class="counter">
-                                <button class="btn btn-m" onclick="step('${i.n}_o',-0.5)">-</button>
+                                <button class="btn btn-m" onclick="step('${i.n}_o',-1)">-</button>
                                 <input class="val" id="${i.n}_o" value="0" readonly>
-                                <button class="btn btn-p" onclick="step('${i.n}_o',0.5)">+</button>
+                                <button class="btn btn-p" onclick="step('${i.n}_o',1)">+</button>
                             </div>
                         </div>
                     </div>
@@ -104,7 +103,8 @@
     function step(id, v) {
         const el = document.getElementById(id);
         let n = Math.max(0, parseFloat(el.value) + v);
-        el.value = n;
+        // 修正浮點數運算誤差
+        el.value = Math.round(n * 10) / 10;
     }
 
     function process() {
@@ -136,7 +136,6 @@
         const outputArea = document.getElementById("output");
         outputArea.value = txt;
         
-        // 執行複製功能
         if (navigator.clipboard && window.isSecureContext) {
             navigator.clipboard.writeText(txt).then(() => successFeedback());
         } else {
@@ -156,7 +155,6 @@
         }, 3000);
     }
 
-    // 初始化當天日期
     document.getElementById('orderDate').valueAsDate = new Date();
 </script>
 </body>
