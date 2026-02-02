@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>腳落盤點-快捷版</title>
+    <style>
+        :root { --primary: #2c3e50; --accent: #d35400; --bg: #f2f2f2; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 10px; padding-bottom: 100px; }
+        .header { background: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .input-group { margin-bottom: 8px; display: flex; align-items: center; }
+        .input-group label { width: 60px; font-weight: bold; font-size: 14px; }
+        .input-group input { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 16px; }
+        .category-title { background: #34495e; color: white; padding: 8px 15px; border-radius: 6px; margin: 15px 0 8px 0; font-size: 0.9rem; }
+        .item-card { background: white; border-radius: 10px; padding: 12px; margin-bottom: 8px; border-left: 5px solid #bdc3c7; }
+        .item-name { font-size: 1rem; font-weight: bold; margin-bottom: 10px; display: flex; justify-content: space-between; }
+        .unit { font-weight: normal; font-size: 0.8rem; color: #7f8c8d; }
+        .control-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .control-box { text-align: center; background: #fafafa; padding: 5px; border-radius: 5px; }
+        .control-label { font-size: 12px; color: #7f8c8d; margin-bottom: 5px; }
+        .counter { display: flex; align-items: center; justify-content: center; }
+        .btn { width: 40px; height: 40px; border: none; border-radius: 6px; font-size: 18px; color: white; }
+        .btn-m { background: #e74c3c; }
+        .btn-p { background: #27ae60; }
+        .val { width: 40px; text-align: center; font-size: 16px; font-weight: bold; border: none; background: transparent; }
+        .footer { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 15px; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); display: flex; flex-direction: column; gap: 8px; }
+        .main-btn { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 8px; font-size: 16px; font-weight: bold; }
+        #output { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="input-group">
+        <label>日期</label><input type="date" id="orderDate">
+    </div>
+    <div class="input-group">
+        <label>叫貨人</label><input type="text" id="orderName" value="朱展毅">
+    </div>
+</div>
+
+<div id="list"></div>
+
+<div class="footer">
+    <button id="actionBtn" class="main-btn" onclick="process()">產生並自動複製清單</button>
+    <textarea id="output"></textarea>
+</div>
+
+<script>
+    const inventory = [
+        { cat: "醃菜", items: [{n: "辣蘿蔔", u: "3KG"}] },
+        { cat: "肉類", items: [
+            {n: "豬燒肉", u: "3KG"}, {n: "豬五花", u: "3KG"}, {n: "鹹豬肉(豬五花)", u: "3KG"},
+            {n: "牛五花", u: "3KG"}, {n: "雞腿排", u: "18KG/件"}, {n: "和牛胸腹", u: "3KG/件"},
+            {n: "鯖魚", u: "一箱"}, {n: "鮭魚排", u: "包3片"}
+        ]},
+        { cat: "烤菜類", items: [
+            {n: "馬鈴薯", u: "箱/袋"}, {n: "節瓜", u: "箱"}, {n: "杏鮑菇", u: "3KG/包"},
+            {n: "洋蔥", u: "袋"}, {n: "筍絲", u: "12KG/箱"}, {n: "木耳絲", u: "3KG/包"},
+            {n: "豆包", u: "3KG/包"}, {n: "紅蘿蔔", u: "袋"}, {n: "南瓜", u: "箱"}, {n: "蒜仁", u: "包"}
+        ]},
+        { cat: "水菜類", items: [
+            {n: "豆芽菜", u: "一包"}, {n: "高麗菜", u: "籃/箱"}, {n: "油菜", u: "籃"},
+            {n: "大白菜", u: "箱"}, {n: "青江菜", u: "籃"}, {n: "奶油白菜", u: "籃"},
+            {n: "小白菜", u: "籃"}, {n: "金針菇", u: "一包"}
+        ]},
+        { cat: "其他類", items: [
+            {n: "蛋白全蛋液", u: "蛋白1全蛋1/3kg"}, {n: "玉米粒", u: "一件"}, {n: "炒蛋", u: "蛋白1全蛋1"},
+            {n: "豆包(其他)", u: "包"}, {n: "豆腐", u: "盒"}
+        ]}
+    ];
+
+    const listEl = document.getElementById('list');
+    inventory.forEach(c => {
+        listEl.innerHTML += `<div class="category-title">${c.cat}</div>`;
+        c.items.forEach(i => {
+            listEl.innerHTML += `
+                <div class="item-card">
+                    <div class="item-name">${i.n} <span class="unit">${i.u}</span></div>
+                    <div class="control-grid">
+                        <div class="control-box">
+                            <div class="control-label">庫存</div>
+                            <div class="counter">
+                                <button class="btn btn-m" onclick="step('${i.n}_s',-0.5)">-</button>
+                                <input class="val" id="${i.n}_s" value="0" readonly>
+                                <button class="btn btn-p" onclick="step('${i.n}_s',0.5)">+</button>
+                            </div>
+                        </div>
+                        <div class="control-box">
+                            <div class="control-label">叫貨</div>
+                            <div class="counter">
+                                <button class="btn btn-m" onclick="step('${i.n}_o',-0.5)">-</button>
+                                <input class="val" id="${i.n}_o" value="0" readonly>
+                                <button class="btn btn-p" onclick="step('${i.n}_o',0.5)">+</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+        });
+    });
+
+    function step(id, v) {
+        const el = document.getElementById(id);
+        let n = Math.max(0, parseFloat(el.value) + v);
+        el.value = n;
+    }
+
+    function process() {
+        const date = document.getElementById('orderDate').value;
+        const name = document.getElementById('orderName').value;
+        let txt = `腳落食材叫貨日期: ${date}\n叫貨人: ${name}\n`;
+        txt += `------------------------\n`;
+        
+        inventory.forEach(c => {
+            let catHeader = `\n【${c.cat}】\n`;
+            let hasItem = false;
+            c.items.forEach(i => {
+                const s = document.getElementById(i.n + '_s').value;
+                const o = document.getElementById(i.n + '_o').value;
+                if(s > 0 || o > 0) {
+                    if(!hasItem) { txt += catHeader; hasItem = true; }
+                    txt += `${i.n} (${i.u}) | 剩:${s} | 叫:${o}\n`;
+                }
+            });
+        });
+
+        const copyText = document.getElementById("output");
+        copyText.value = txt;
+        copyText.select();
+        copyText.setSelectionRange(0, 99999);
+        navigator.clipboard.writeText(txt).then(() => {
+            const btn = document.getElementById('actionBtn');
+            btn.innerText = "✅ 已複製！可直接貼到 LINE";
+            btn.style.background = "#27ae60";
+            setTimeout(() => {
+                btn.innerText = "再次產生並複製清單";
+                btn.style.background = "#d35400";
+            }, 3000);
+        });
+    }
+    document.getElementById('orderDate').valueAsDate = new Date();
+</script>
+</body>
+</html>
